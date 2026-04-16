@@ -1,70 +1,112 @@
-# Getting Started with Create React App
+# AI-Powered HCP CRM (Life Sciences)
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+An intelligent, full-stack Customer Relationship Management (CRM) prototype designed for Pharmaceutical Sales Representatives. This application uses an AI agent to listen to natural language descriptions of meetings with Healthcare Professionals (HCPs) and automatically updates a structured CRM form, seamlessly saving the data to a PostgreSQL database.
 
-## Available Scripts
+## 🚀 Architecture & Tech Stack
 
-In the project directory, you can run:
+This project was built to strictly satisfy the assignment requirements:
 
-### `npm start`
+- **Frontend:** React.js
+- **State Management:** Redux Toolkit (`react-redux`, `@reduxjs/toolkit`)
+- **Backend:** Python 3.x with FastAPI
+- **AI Agent Framework:** LangGraph (`langgraph`, `langchain-core`)
+- **LLM Provider:** Groq (Model: `llama-3.3-70b-versatile` for reliable tool execution)
+- **Database:** PostgreSQL with SQLAlchemy (`psycopg2-binary`)
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+## 🛠️ AI Tool Integration (LangGraph)
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+The LangGraph agent is equipped with **5 specific tools** to handle HCP interactions:
 
-### `npm test`
+1.  **`log_interaction_tool` (Mandatory):** Extracts HCP Name, date, topics, sentiment, and materials from a new meeting description.
+2.  **`edit_interaction_tool` (Mandatory):** Allows the user to naturally correct specific fields (e.g., _"Change the sentiment to positive"_).
+3.  **`fetch_hcp_history_tool`:** Retrieves mock historical data about a specific doctor's preferences and past meetings.
+4.  **`suggest_materials_tool`:** Recommends specific pharmaceutical brochures or clinical trial PDFs based on the medical topic discussed.
+5.  **`generate_follow_ups_tool`:** Analyzes the meeting sentiment and topics to automatically generate actionable next steps.
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+---
 
-### `npm run build`
+## ⚙️ Local Setup Instructions
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+### Prerequisites
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+- Node.js
+- Python
+- PostgreSQL & DBeaver (or another SQL client)
+- A free API key from [Groq](https://console.groq.com/keys)
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+### 1. Database Setup
 
-### `npm run eject`
+1. Open DBeaver and connect to your local PostgreSQL server.
+2. Create a new database named **`hcp_crm`**.
+3. (SQLAlchemy will automatically create the required tables when the backend starts).
 
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
+### 2. Backend Setup (FastAPI & AI)
 
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+1. Open a terminal and navigate to the backend directory:
+   ```bash
+   cd hcp-crm-backend
+   ```
+2. Create and activate a virtual environment:
+   ````bash
+   python -m venv venv
+    # On Windows:
+    .\venv\Scripts\activate
+    # On Mac/Linux:
+    source venv/bin/activate
+    ```
+   ````
+3. Install dependencies:
+   ```bash
+   pip install fastapi uvicorn pydantic python-dotenv langchain-groq langgraph sqlalchemy psycopg2-binary
+   ```
+4. Configure Environment Variables:
+   - Create a file named .env in the hcp-crm-backend folder.
+   - Add your Groq API key:
+     ```Code snippet
+     GROQ_API_KEY=gsk_your_actual_key_here
+     ```
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
+5. Update Database Credentials:
+   - Open **`database.py`** and ensure the **`SQLALCHEMY_DATABASE_URL`** matches your local Postgres credentials.
 
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
+6. Start the server:
 
-## Learn More
+   ```bash
+   uvicorn main:app --reload
+   ```
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+   The backend will run on http://127.0.0.1:8000
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+### 3. Frontend Setup (React & Redux)
 
-### Code Splitting
+1. Open a new terminal and navigate to the frontend directory:
+   `bash cd hcp-crm-frontend `
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
+2. Install dependencies:
+   `bash npm install`
 
-### Analyzing the Bundle Size
+3. Start the React development server:
+   `bash npm start`
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
+- The app will open automatically at http://localhost:3000
 
-### Making a Progressive Web App
+### 🧪 How to Use the App
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
+Once both servers are running, try chatting with the AI on the right side of the screen.
 
-### Advanced Configuration
+### Test Prompt 1 (Logging & Follow-ups):
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
+"I met with Dr. Sharma today. We discussed the new OncoBoost trials. He seemed very positive about it."
+(Watch the form auto-fill the details and automatically generate follow-up actions).
 
-### Deployment
+### Test Prompt 2 (Editing):
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
+"Actually, change the sentiment to neutral."
+(Watch the radio button change on the left panel).
 
-### `npm run build` fails to minify
+### Test Prompt 3 (Tool Invocation):
 
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+"What materials should I send him based on our conversation?"
+(Watch the AI use the materials tool to suggest Oncology PDFs).
+
+Check your PostgreSQL interactions table in DBeaver to verify that the final meeting state was permanently saved!
