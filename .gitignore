@@ -1,0 +1,10 @@
+# Ignore Node and Python heavy folders
+node_modules/
+venv/
+__pycache__/
+
+# Ignore secret environment variables
+.env
+
+# Ignore Mac system files
+.DS_Store
