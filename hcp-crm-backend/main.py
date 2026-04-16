@@ -3,6 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from dotenv import load_dotenv
 import json
+from datetime import datetime  # <--- NEW: Imported datetime
 
 # --- Database Imports ---
 from database import SessionLocal, InteractionLog
@@ -48,10 +49,14 @@ class ChatRequest(BaseModel):
 # --- 2. Define All 5 LangGraph Tools ---
 
 @tool
-def log_interaction_tool(hcpName: str, date: str, topicsDiscussed: str, sentiment: str, materialsShared: list[str]) -> dict:
+def log_interaction_tool(hcpName: str, date: str, time: str, topicsDiscussed: str, sentiment: str, materialsShared: list[str]) -> dict:
     """
     TOOL 1: Use this tool ONLY when the user describes a NEW interaction. 
-    It extracts the HCP Name, date (YYYY-MM-DD), topics discussed, sentiment (Positive, Neutral, Negative), and materials.
+    It extracts the HCP Name, date, time, topics discussed, sentiment (Positive, Neutral, Negative), and materials.
+    
+    CRITICAL FORMATTING:
+    - 'date' MUST be in 'YYYY-MM-DD' format.
+    - 'time' MUST be in 'HH:MM' (24-hour) format.
     """
     print(f"\n--- TOOL TRIGGERED: log_interaction_tool for {hcpName} ---")
     return {
@@ -59,6 +64,7 @@ def log_interaction_tool(hcpName: str, date: str, topicsDiscussed: str, sentimen
         "data": {
             "hcpName": hcpName,
             "date": date,
+            "time": time,  # <--- NEW: Added time to the update payload
             "topicsDiscussed": topicsDiscussed,
             "sentiment": sentiment,
             "materialsShared": materialsShared
@@ -164,12 +170,25 @@ agent_executor = create_react_agent(llm, tools)
 # --- 4. The API Endpoint ---
 @app.post("/chat")
 async def chat_endpoint(request: ChatRequest):
-    # Tell the AI who it is and what the current form looks like
+    # --- NEW: GET CURRENT DATE AND TIME ---
+    today_date = datetime.now().strftime("%Y-%m-%d")
+    current_time = datetime.now().strftime("%H:%M")
+
+
+    # Tell the AI who it is, what time it is, and what the current form looks like
     system_prompt = f"""
     You are an expert AI CRM assistant for Pharma reps. 
+    IMPORTANT CONTEXT: Today's date is {today_date} and the current time is {current_time}.
+    If the user says "today", use exactly {today_date}. If they don't specify a time, default to {current_time}.
+    
     Current form state: {request.formState.model_dump()}
     Always use your tools to update the form when the user provides interaction details.
-    Be conversational and brief in your text responses.
+    
+    CRITICAL RULES FOR YOUR CHAT RESPONSES:
+    1. Be highly conversational, warm, and extremely brief.
+    2. NEVER output raw JSON, dictionaries, or the raw "form state".
+    3. DO NOT act like a robot reading a data log. NEVER repeat the exact time (like "14:44") or date back to the user unless they explicitly ask what time it is. 
+    4. Example of a good response: "Got it! I've logged your positive meeting with Dr. Sharma regarding the OncoBoost trials."
     """
 
     # Run the LangGraph Agent
